@@ -4,6 +4,8 @@ import time
 import queue
 import re
 from typing import Union
+import signal, json
+import sys, os
 
 data_receive_mode = 2  # n: 只接收n个数据 , 当前n<=4， 但是可以扩展
 datax_queue = queue.Queue()
@@ -130,10 +132,17 @@ class plotData:
         plt.pause(0.01)                 # 刷新窗口
 
 
+def my_exit_handler(sig, frame):
+    global running
+    print("\n检测到 Ctrl+C，正在退出程序...")
+    running = False
+    plt.close('all')  # 关闭所有 matplotlib 窗口，从而打破 plt.show() 的阻塞
+    sys.exit(0)
 
 
 if __name__ == '__main__':
     data = plotData()
+    signal.signal(signal.SIGINT, my_exit_handler)
 
     # 启动蓝牙接收后台线程
     bt_thread = threading.Thread(target=bluetooth_receive_thread, daemon=True)
