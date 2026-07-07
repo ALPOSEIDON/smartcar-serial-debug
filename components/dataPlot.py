@@ -1,10 +1,11 @@
-import matplotlib.pyplot as plt, numpy as np
-import threading, sys
+import matplotlib.pyplot as plt
+import threading, sys, signal
 from .queueClass import DataQueue
 from abc import ABC, abstractmethod
 
-_color_map_max = 4
+
 _color_map = ['blue', 'orange', 'green', 'red']  # 颜色映射列表
+_color_map_max = len(_color_map)
 
 
 
@@ -61,12 +62,13 @@ class DataPlot:
         self.x_class = x_value_class
         self.running = True
 
+        signal.signal(signal.SIGINT, self.exit_handler)     # 注册退出信号
+
         # 绘图直接在主线程中进行： self.plot_data()
 
     def start(self):
         plt.ion()  # 开启交互模式
         self.fig, self.ax = plt.subplots()
-
         while self.running:
             try:
                 if not self.data_queue.data_queue[self.queue_style[0]].empty():             # 这里还可以改进一下
@@ -82,7 +84,7 @@ class DataPlot:
         self.ax.clear()
         self.x_class.refresh_x_value(self.x_class.get_x_new_value())        # 刷新x轴坐标值
         for colorIndex, style in enumerate(self.queue_style):
-            self.ax.plot(self.x_class.return_x_list, 
+            self.ax.plot(self.x_class.return_x_list(), 
                          self.data_queue.data_dict[style], 
                          color=_color_map[colorIndex if colorIndex < _color_map_max else _color_map_max - 1], 
                          label=style)
@@ -102,5 +104,13 @@ class DataPlot:
         停止绘图线程
         """
         self.running = False
+        plt.close('all')  # 关闭所有 matplotlib 窗口，从而打破 plt.show() 的阻塞
+        sys.exit(0)
+
+    def exit_handler(self, fig, frame):
+        """
+        重构退出信号，防止线程阻塞
+        """
+        print("\n检测到 Ctrl+C，正在退出程序...")
         plt.close('all')  # 关闭所有 matplotlib 窗口，从而打破 plt.show() 的阻塞
         sys.exit(0)
