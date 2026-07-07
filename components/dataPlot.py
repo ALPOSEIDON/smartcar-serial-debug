@@ -4,7 +4,9 @@ from .queueClass import DataQueue
 from abc import ABC, abstractmethod
 
 
-_color_map = ['blue', 'orange', 'green', 'red']  # 颜色映射列表
+_color_map = ['blue', 'green', 'red', 
+              'orange', 'cyan', 'magenta', 
+              'yellow', 'black']  # 颜色映射列表
 _color_map_max = len(_color_map)
 
 
@@ -61,9 +63,6 @@ class DataPlot:
         self.queue_style = data_queue.queue_style
         self.x_class = x_value_class
         self.running = True
-
-        signal.signal(signal.SIGINT, self.exit_handler)     # 注册退出信号
-
         # 绘图直接在主线程中进行： self.plot_data()
 
     def start(self):
@@ -108,13 +107,15 @@ class DataPlot:
         停止绘图线程
         """
         self.running = False
+
+        self.save_data()
+
         plt.close('all')  # 关闭所有 matplotlib 窗口，从而打破 plt.show() 的阻塞
         sys.exit(0)
 
-    def exit_handler(self, fig, frame):
+
+    def save_data(self):
         """
-        重构退出信号，防止线程阻塞
+        可以重构这个函数实现保存不同的数据
         """
-        print("\n检测到 Ctrl+C，正在退出程序...")
-        plt.close('all')  # 关闭所有 matplotlib 窗口，从而打破 plt.show() 的阻塞
-        sys.exit(0)
+        pass
