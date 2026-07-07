@@ -1,15 +1,64 @@
 import matplotlib.pyplot as plt, numpy as np
 import threading, sys
 from .queueClass import DataQueue
+from abc import ABC, abstractmethod
 
 _color_map_max = 4
 _color_map = ['blue', 'orange', 'green', 'red']  # 颜色映射列表
 
 
+
+class x_value(ABC):
+    """
+    为DataPlot方法提供绘图x坐标的基类，可以继承这个类以构造不同形式的x坐标
+    """
+    def __init__(self):
+        self.x_vlue_list = []
+
+    @abstractmethod
+    def refresh_x_value(self, new_value = None):
+        """"
+        需要自己构造这个方法，实现对x坐标数据的刷新。记得判断new_value参数，因为有可能需要输入数据以更新参数。有如下重构要求
+
+        :param new_value:   可选的参数，为x刷新提供数据。如果不需要用到这个参数请将其置为None并且加以判断。可以从get_x_new_value获取参数
+        """
+        pass
+    
+    @abstractmethod
+    def get_x_new_value(self):
+        """
+        重构此方法，用于给x_value_list提供新的值，可以当作参数传给refresh_x_value
+        """
+        pass
+
+    def return_x_list(self):
+        return self.x_vlue_list
+    
+    def return_x_last_value(self):
+        return self.x_vlue_list[-1] if len(self.x_vlue_list) != 0 else None
+    
+class isometry(x_value):
+    """
+    提供离散的等距点阵，给DataPlot画图
+    """
+    def __init__(self):
+        super().__init__()
+        self.count = 0
+
+    def refresh_x_value(self, new_value = None):
+        self.x_vlue_list.append(self.count)
+        self.count += 1
+
+    def get_x_new_value(self):
+        return None
+
+
+
 class DataPlot:
-    def __init__(self, data_queue: DataQueue):
+    def __init__(self, data_queue: DataQueue, x_value_class:x_value = isometry()):
         self.data_queue = data_queue
         self.queue_style = data_queue.queue_style
+        self.x_class = x_value_class
         self.running = True
 
         # 绘图直接在主线程中进行： self.plot_data()
@@ -20,21 +69,21 @@ class DataPlot:
 
         while self.running:
             try:
-                if not self.data_queue.datax_queue.empty():
+                if not self.data_queue.data_queue[self.queue_style[0]].empty():             # 这里还可以改进一下
                     self.data_queue.get_data()  # 从队列中拿走数据，防止阻塞信息队列
                     self.update_plot()  # 更新绘图
             except Exception as e:
                 print(f"主线程发生错误: {e}")
 
-
     def update_plot(self):
         """
-        刷新一次窗口，通常用于增加一组数据点
+        刷新一次窗口，用于增加一组数据点
         """
         self.ax.clear()
+        self.x_class.refresh_x_value(self.x_class.get_x_new_value())        # 刷新x轴坐标值
         for colorIndex, style in enumerate(self.queue_style):
-            self.ax.plot(self.data_queue.datax_list, 
-                         self.data_queue.datay_list[style], 
+            self.ax.plot(self.x_class.return_x_list, 
+                         self.data_queue.data_dict[style], 
                          color=_color_map[colorIndex if colorIndex < _color_map_max else _color_map_max - 1], 
                          label=style)
 
