@@ -82,12 +82,16 @@ class DataPlot:
         刷新一次窗口，用于增加一组数据点
         """
         self.ax.clear()
-        self.x_class.refresh_x_value(self.x_class.get_x_new_value())        # 刷新x轴坐标值
-        for colorIndex, style in enumerate(self.queue_style):
-            self.ax.plot(self.x_class.return_x_list(), 
-                         self.data_queue.data_dict[style], 
-                         color=_color_map[colorIndex if colorIndex < _color_map_max else _color_map_max - 1], 
-                         label=style)
+        with self.data_queue._lock:
+            self.x_class.refresh_x_value(self.x_class.get_x_new_value())        # 刷新x轴坐标值
+            min_len = min(
+                len(self.x_class.return_x_list()), 
+                len(self.data_queue.data_dict[self.queue_style[0]]))
+            for colorIndex, style in enumerate(self.queue_style):
+                self.ax.plot(self.x_class.return_x_list()[:min_len], 
+                            self.data_queue.data_dict[style][:min_len], 
+                            color=_color_map[colorIndex if colorIndex < _color_map_max else _color_map_max - 1], 
+                            label=style)
 
         self.ax.set_title('Real Time Data Plot')
         self.ax.set_xlabel('X-axis')

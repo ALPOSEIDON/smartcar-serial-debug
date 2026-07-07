@@ -27,8 +27,8 @@ class DataQueue:
 
         :param (list) data: 数据列表，请按照注册的顺序写入，确保数据的个数足够
         """
-        assert len(data) == len(self.queue_style), "数据长度与队列样式长度不匹配，请检查输入数据。"
         with self._lock:  # 使用互斥锁确保线程安全
+            assert len(data) == len(self.queue_style), "数据长度与队列样式长度不匹配，请检查输入数据。"
             for numIndex, style in enumerate(self.queue_style):
                 self.data_queue[style].put(data[numIndex])
                 self.data_dict[style].append(data[numIndex])
