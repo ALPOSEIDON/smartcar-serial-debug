@@ -1,6 +1,8 @@
 import components as cp, signal
 import matplotlib.pyplot as plt, sys
 
+COM = 'COM5'
+baudrate = 115200
 
 def exit_handler(fig, frame):
     """
@@ -26,6 +28,6 @@ if __name__ == "__main__":
     # 示例代码
     signal.signal(signal.SIGINT, exit_handler)     # 注册退出信号
     data_queue = cp.DataQueue(queue_style=queue_style[0])
-    bluetooth = cp.bluetoothDevice('COM5', 115200, data_queue)
+    bluetooth = cp.bluetoothDevice(COM, baudrate, data_queue)
     plot = cp.DataPlot(data_queue)
     plot.start()
