@@ -127,18 +127,52 @@ class DataPlot:
         """
         pass
 
+
+class DataLoadPlot(DataPlot):
+    def __init__(self, data_queue = DataQueue(), x_value_class = isometry(), *args, **kwargs):
+        super().__init__(data_queue, x_value_class, *args, **kwargs)
+
+    def draw(self, x_data:list, y_data:dict):
+        # 更新原本的Key列表
+        self.queue_style = list(y_data.keys())
+        self.update_plot(True, x_data, y_data)
+        while self.running:
+            self.update_plot(False)
+
+
 if __name__ == "__main__":
-    data = DataQueue()
-    plot = DataPlot(data)
+    def exit_handler(fig, frame):
+        """
+        重构退出信号，防止线程阻塞
+        """
+        print("\n检测到 Ctrl+C，正在退出程序...")
+        plt.close('all')  # 关闭所有 matplotlib 窗口，从而打破 plt.show() 的阻塞
+        sys.exit(0)
 
-    import time
+    signal.signal(signal.SIGINT, exit_handler)     # 注册退出信号
 
-    def data_transmit():
-        for i in range(3):
-            time.sleep(2)
-            data.put_data([1, 12])
+
     
-    thread = threading.Thread(target=data_transmit, daemon=True)
-    thread.start()
-    plot.start()
+    # # 测试DataPlot
+    # data = DataQueue()
+    # plot = DataPlot(data)
+
+    # import time
+
+    # def data_transmit():
+    #     for i in range(3):
+    #         time.sleep(2)
+    #         data.put_data([1, 12])
     
+    # thread = threading.Thread(target=data_transmit, daemon=True)
+    # thread.start()
+    # plot.start()
+    
+
+    # 测试DataLoadPlot
+    from .fileOperate import DataLoader
+    data = DataLoader()
+    data.load_data()
+    plot= DataLoadPlot()
+    plot.draw(data.dict["x_data"], data.dict["y_data"])
+

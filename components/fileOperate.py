@@ -73,6 +73,7 @@ class DataLoader:
         self.file_counter = self._get_next_counter()
         if need_specific_path:
             self.file_counter = None
+        self.dict = {}      # 注册空字典
 
     def _get_next_counter(self):
         """检查目录，找出最后一个文件"""
@@ -97,31 +98,34 @@ class DataLoader:
 if __name__ == "__main__":
     # 测试DataSaver
 
-    # saver = DataSaver()  # 初始化保存器，默认创建 received_data 文件夹
-    # # 模拟蓝牙每收到一次数据的动作
-    # try:
-    #     while True:
-    #         # 假设这是你蓝牙收到的单次数据（打包成字典）
-    #         mock_bluetooth_data = {
-    #             "timestamp": "2026-07-06 14:00:00",
-    #             "sensor_value": 42.5,
-    #             "status": "OK"
-    #         }
+    saver = DataSaver()  # 初始化保存器，默认创建 received_data 文件夹
+    # 模拟蓝牙每收到一次数据的动作
+    try:
+        while True:
+            # 假设这是你蓝牙收到的单次数据（打包成字典）
+            mock_bluetooth_data = {
+                "x_data": [1, 2, 3, 4, 5],
+                "y_data": {
+                    "L": [1,2,3,4,5],
+                    "R": [2,3,4,5,6]
+                },
+                "status": "OK"
+            }
             
-    #         # 保存数据
-    #         saver.save_data(mock_bluetooth_data)
+            # 保存数据
+            saver.save_data(mock_bluetooth_data)
             
-    #         # 模拟等待下一次接收
-    #         import time
-    #         time.sleep(2)
+            # 模拟等待下一次接收
+            import time
+            time.sleep(2)
             
-    # except KeyboardInterrupt:
-    #     print("\n检测到 Ctrl+C，停止保存，安全退出。")
+    except KeyboardInterrupt:
+        print("\n检测到 Ctrl+C，停止保存，安全退出。")
 
 
 
 
-    # 测试DataLoader
+    # # 测试DataLoader
 
-    data = DataLoader()
-    data.load_data()
+    # data = DataLoader()
+    # data.load_data()
