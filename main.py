@@ -5,7 +5,7 @@ COM = 'COM5'
 baudrate = 115200
 
 queue_style = [
-    ["pulse_R", "pulse_L"],
+    ["pulse_R", "pulse_L", "L", "R"],
 ]
 _default_queue_style = 0
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--baudrate", default=baudrate, type=int, help="串口的波特率，默认为115200")
     parser.add_argument("-ch", "--channels", default=queue_style[_default_queue_style], nargs='+', 
                         type=str, help="最终需要接受的通道列表，可以传入多个参数，但请注意下位机要按顺序发送等量数据")
-    parser.add_argument("-store", "--store_received", action="store_true", help="是否需要存储接收到的数据。默认需要")
+    parser.add_argument("-store", "--store_received", action="store_false", help="是否需要存储接收到的数据。默认需要")
     
     args = parser.parse_parser_args() if 'parse_parser_args' in dir(parser) else parser.parse_args()
 

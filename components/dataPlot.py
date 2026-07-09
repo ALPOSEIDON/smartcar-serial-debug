@@ -78,7 +78,8 @@ class DataPlot:
                         x_data = self.x_class.return_x_list()
                         y_data = self.data_queue.data_dict
                     self.data_queue.get_data()  # 从队列中拿走数据，防止阻塞信息队列
-                    self.update_plot(True, x_data, y_data)  # 更新绘图
+                    print(0)
+                    self.update_plot(update_data=True, x_data=x_data, y_data=y_data)  # 更新绘图
                 else:
                     self.update_plot(False)
             except Exception as e:
@@ -89,10 +90,11 @@ class DataPlot:
         刷新一次窗口，用于增加一组数据点
         """
         if update_data:
+            print(1)
             self.ax.clear()
             with self.data_queue._lock:
-                min_len = min(len(x_data), len(y_data))
                 for colorIndex, style in enumerate(self.queue_style):
+                    min_len = min(len(x_data), len(y_data[style]))
                     self.ax.plot(x_data[:min_len], 
                                 y_data[style][:min_len], 
                                 color=_color_map[colorIndex if colorIndex < _color_map_max else _color_map_max - 1], 
