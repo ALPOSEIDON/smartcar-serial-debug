@@ -4,6 +4,11 @@ import matplotlib.pyplot as plt, sys
 COM = 'COM5'
 baudrate = 115200
 
+queue_style = [
+    ["pulse_R", "pulse_L"],
+]
+_default_queue_style = 0
+
 def exit_handler(fig, frame):
     """
     重构退出信号，防止线程阻塞
@@ -18,12 +23,10 @@ def save_data():
     data.addData('x_data', plot.x_class.return_x_list())
     data.addData('y_data', data_queue.data_dict)
     data.addData('timestamp', cp.returnTime())
-    data.saveData()
-
-queue_style = [
-    ["pulse_R", "pulse_L"],
-]
-_default_queue_style = 0
+    if args.store_received:
+        data.saveData()
+    else:
+        print("没有存储数据")
 
 if __name__ == "__main__":
     # 示例代码
@@ -31,7 +34,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="蓝牙串口接受程序")
     parser.add_argument("-c", "--com", default=COM, type=str, help="请传入需要打开的串口号，默认为 COM")
     parser.add_argument("-b", "--baudrate", default=baudrate, type=int, help="串口的波特率，默认为115200")
-    parser.add_argument("-ch", "--channels", default=queue_style[_default_queue_style], nargs='+', type=str, help="最终需要接受的通道列表")
+    parser.add_argument("-ch", "--channels", default=queue_style[_default_queue_style], nargs='+', 
+                        type=str, help="最终需要接受的通道列表，可以传入多个参数，但请注意下位机要按顺序发送等量数据")
+    parser.add_argument("-store", "--store_received", action="store_true", help="是否需要存储接收到的数据。默认需要")
     
     args = parser.parse_parser_args() if 'parse_parser_args' in dir(parser) else parser.parse_args()
 
