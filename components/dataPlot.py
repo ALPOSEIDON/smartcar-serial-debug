@@ -1,3 +1,5 @@
+from turtle import update
+
 import matplotlib.pyplot as plt
 import threading, sys, signal
 from .queueClass import DataQueue
@@ -64,43 +66,48 @@ class DataPlot:
         self.x_class = x_value_class
         self.running = True
         # 绘图直接在主线程中进行： self.plot_data()
-
-    def start(self):
         plt.ion()  # 开启交互模式
         self.fig, self.ax = plt.subplots()
+
+    def start(self):
         while self.running:
             try:
                 if not self.data_queue.data_queue[self.queue_style[0]].empty():             # 这里还可以改进一下
+                    with self.data_queue._lock:
+                        self.x_class.refresh_x_value(self.x_class.get_x_new_value())        # 刷新x轴坐标值
+                        x_data = self.x_class.return_x_list()
+                        y_data = self.data_queue.data_dict
                     self.data_queue.get_data()  # 从队列中拿走数据，防止阻塞信息队列
-                    self.update_plot()  # 更新绘图
+                    self.update_plot(True, x_data, y_data)  # 更新绘图
+                else:
+                    self.update_plot(False)
             except Exception as e:
                 print(f"主线程发生错误: {e}")
 
-    def update_plot(self):
+    def update_plot(self, update_data: bool = False, x_data: list= [0, 1], y_data: dict= {"None": [0, 1]}):
         """
         刷新一次窗口，用于增加一组数据点
         """
-        self.ax.clear()
-        with self.data_queue._lock:
-            self.x_class.refresh_x_value(self.x_class.get_x_new_value())        # 刷新x轴坐标值
-            min_len = min(
-                len(self.x_class.return_x_list()), 
-                len(self.data_queue.data_dict[self.queue_style[0]]))
-            for colorIndex, style in enumerate(self.queue_style):
-                self.ax.plot(self.x_class.return_x_list()[:min_len], 
-                            self.data_queue.data_dict[style][:min_len], 
-                            color=_color_map[colorIndex if colorIndex < _color_map_max else _color_map_max - 1], 
-                            label=style)
+        if update_data:
+            self.ax.clear()
+            with self.data_queue._lock:
+                min_len = min(len(x_data), len(y_data))
+                for colorIndex, style in enumerate(self.queue_style):
+                    self.ax.plot(x_data[:min_len], 
+                                y_data[style][:min_len], 
+                                color=_color_map[colorIndex if colorIndex < _color_map_max else _color_map_max - 1], 
+                                label=style)
 
-        self.ax.set_title('Real Time Data Plot')
-        self.ax.set_xlabel('X-axis')
-        self.ax.set_ylabel('Y-axis')
-        self.ax.legend()                    # 显示图例
-        self.ax.grid(True)
+            self.ax.set_title('Real Time Data Plot')
+            self.ax.set_xlabel('X-axis')
+            self.ax.set_ylabel('Y-axis')
+            self.ax.legend()                    # 显示图例
+            self.ax.grid(True)
+            self.fig.canvas.draw()              # 绘制图形
+            self.fig.canvas.flush_events()      # 刷新图形
 
-        self.fig.canvas.draw()              # 绘制图形
-        self.fig.canvas.flush_events()      # 刷新图形
         plt.pause(0.01)                     # 刷新窗口
+
 
     def stop(self):
         """
@@ -119,3 +126,19 @@ class DataPlot:
         可以重构这个函数实现保存不同的数据
         """
         pass
+
+if __name__ == "__main__":
+    data = DataQueue()
+    plot = DataPlot(data)
+
+    import time
+
+    def data_transmit():
+        for i in range(3):
+            time.sleep(2)
+            data.put_data([1, 12])
+    
+    thread = threading.Thread(target=data_transmit, daemon=True)
+    thread.start()
+    plot.start()
+    
